@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./static/js/jquery-3.6.4.min.js"></script>
+</head>
+
+<body>
+    <h1>dang nhap bang passport</h1><br>
+    username: <input type="text" id="username"><br>
+    password: <input type="tex" id="password"><br>
+    login: <input type="button" onclick="login()" value="login">
+    -----------------------
+    <h1>du lieu truyen ve</h1>
+    <input type="button" id="getDataBtn" value="getData"><br><br>
+
+
+
+    <a href="/auth/facebook">
+        <button type="button" name="button">dang nhap bang fb</button>
+    </a>
+
+    __________________________
+    <h1>dang nhap bang facebook</h1>
+    <input type="button" id="loginFbBtn" value="dang nhap bang fb">
+
+</body>
+<script>
+    function login() {
+        var username = $('#username').val();
+        var password = $('#password').val();
+        $.ajax({
+            url: '/passport',
+            type: 'POST',
+            data: {
+                username: username,
+                password: password
+            }
+        })
+            .then(data => {
+                console.log('data tu client: ', data)
+                localStorage.setItem('token', data)
+            })
+            .catch(err => {
+                console.log('err tua client: ', err)
+            })
+    }
+
+    $('#getDataBtn').click(() => {
+        $.ajax({
+            url: '/private',
+            type: 'GET',
+            headers: {
+                authorization: 'Bearer ' + localStorage.getItem('token')
+            }
+        })
+            .then(data => {
+                console.log('data tu client: ', data)
+
+            })
+            .catch(err => {
+                console.log('err tua client: ', err)
+            })
+    })
+    $('#loginFbBtn').click(() => {
+        $.ajax({
+            url: '/auth/facebook',
+            type: 'GET',
+
+        })
+            .then(data => {
+                console.log('data tu client: ', data)
+
+            })
+            .catch(err => {
+                console.log('err tua client: ', err)
+            })
+    })
+</script>
+
+</html>

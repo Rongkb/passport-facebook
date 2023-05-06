@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./static/js/jquery-3.6.4.min.js"></script>
+</head>
+
+<body>
+    <h1>dang nhap bang facebook</h1>
+    <input type="button" id="loginFbBtn" value="dang nhap bang fb"><br>
+    -------------------------------------------
+    <h1>logout</h1>
+    <input type="button" id="logoutBtn" value="logoutFB"><br>
+
+    <a href="/logout">
+        <button type="button" name="button">logout</button>
+    </a>
+</body>
+<script>
+
+    $('#loginFbBtn').click(() => {
+        $.ajax({
+            url: '/auth/facebook',
+            type: 'GET',
+
+        })
+            .then(data => {
+                console.log('data tu client: ', data)
+
+            })
+            .catch(err => {
+                console.log('err tua client: ', err)
+            })
+    })
+
+    $('#logoutBtn').click(() => {
+        // document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+    })
+</script>
+
+</html>
