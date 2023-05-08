@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./static/js/jquery-3.6.4.min.js"></script>
+</head>
+
+<body>
+    <h1>dang nhap bang passport</h1><br>
+    username: <input type="text" id="username"><br>
+    password: <input type="tex" id="password"><br>
+    login: <input type="button" onclick="login()" value="login">
+    -----------------------
+
+
+
+
+</body>
+<script>
+    function login() {
+        var username = $('#username').val();
+        var password = $('#password').val();
+        $.ajax({
+            url: '/local',
+            type: 'POST',
+            data: {
+                username: username,
+                password: password
+            }
+        })
+            .then(data => {
+                console.log('data tu client: ', data)
+                localStorage.setItem('token', data)
+            })
+            .catch(err => {
+                console.log('err tua client: ', err)
+            })
+    }
+
+
+</script>
+
+</html>

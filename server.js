@@ -7,6 +7,7 @@ var passport = require('passport');
 const session = require('express-session');
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
 var cors = require('cors')
 
 require('./src/helper/connect_mongodb')
@@ -37,11 +38,16 @@ app.use(bodyParser.json())
 
 // passport
 
+// app.use(session({
+//     secret: 'mysecret',
+//     resave: false, // Thêm tùy chọn resave
+//     saveUninitialized: false,
+//     cookie: { secure: false }
+// }));
 app.use(session({
     secret: 'mysecret',
     resave: false, // Thêm tùy chọn resave
-    saveUninitialized: false,
-    cookie: { secure: false }
+    saveUninitialized: false // Thêm tùy chọn saveUninitialized
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -75,14 +81,21 @@ app.get('/logiFacebook', (req, res, next) => {
     res.sendFile(path.join(__dirname, './src/view/login_facebook.html'))
 
 })
+app.get('/loginLocal', (req, res, next) => {
+    res.sendFile(path.join(__dirname, './src/view/login_local.html'))
+
+})
 app.get('/logout', function (req, res) {
-    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+    req.session.destroy();
+    res.json('log out ok')
 });
 
 app.get('/success', async (req, res) => {
     const data = req.user
     console.log(req.isAuthenticated())
-    console.log(data)
+    console.log('data: ', data)
+    console.log('session: ', req.session)
+
     if (req.isAuthenticated()) {
         res.json(data)
     } else {
@@ -90,11 +103,64 @@ app.get('/success', async (req, res) => {
         res.json('ban chua dang nhap')
     }
 });
+
+// app.post('/local',
+//     passport.authenticate('local', { failureRedirect: '/login' }),
+//     function (req, res) {
+//         res.redirect('/');
+//     });
+app.post("/local", function (req, res, next) {
+    console.log(req.body)
+    passport.authenticate('local', function (err, user) {
+        if (err) {
+            return res.status(500).json('loi servet')
+            // console.log('err')
+        }
+        if (!user) {
+            return res.json('ussernamr pasd ko hop le')
+            // console.log('user')
+        }
+        jwt.sign({ user }, '123', function (err, token) {
+            console.log('err: ', err)
+            if (err) return res.status(500).json('loi server')
+            return res.json(token)
+        })
+    })(req, res, next);
+});
+
+
 app.get('/auth/facebook',
     passport.authenticate('facebook', { scope: ['email'] }));
 app.get('/auth/facebook/callback',
     passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }),
 );
+app.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile'] }));
+app.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/' }),
+);
+// passport local
+passport.use(new LocalStrategy(
+    function (username, password, done) {
+
+        AcountModel.findOne({
+            username: username,
+            password: password
+        })
+            .then(data => {
+                if (!data) done(null, false)
+                done(null, data)
+            })
+            .catch(err => {
+                done(err)
+            })
+
+    }
+));
+
+
+
+//passport facebook
 passport.use(new FacebookStrategy({
     clientID: '639057604940357',
     clientSecret: '7ebcd1864fa811450eca6c221cf19bf4',
@@ -103,6 +169,8 @@ passport.use(new FacebookStrategy({
 },
     async function (accessToken, refreshToken, profile, done) {
         console.log(profile)
+        console.log(accessToken)
+        console.log(refreshToken)
 
         const user = await AcountModel.findOne({
             id: profile.id,
@@ -113,7 +181,8 @@ passport.use(new FacebookStrategy({
             const user = new AcountModel({
                 id: profile.id,
                 username: profile.displayName,
-
+                authType: 'facebook',
+                authFacebookId: profile.id
             });
             await user.save();
             // console.log(user);
@@ -128,14 +197,43 @@ passport.use(new FacebookStrategy({
     }
 ));
 
-// passport.serializeUser((user, done) => {
-//     done(null, user.id)
-// })
-// passport.deserializeUser((id, done) => {
-//     AcountModel.findOne({ id: id }, (err, user) => {
-//         done(null, user)
-//     })
-// })
+// passport google
+passport.use(new GoogleStrategy({
+    clientID: '946279036594-jop5fld5vuu28dnck5vdapntr8dd6m1n.apps.googleusercontent.com',
+    clientSecret: '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',
+    callbackURL: "http://localhost:3000/auth/google/callback",
+    // profileFields: ['email', 'gender', 'displayName']
+},
+    async function (accessToken, refreshToken, profile, done) {
+        console.log(profile)
+        console.log(accessToken)
+        console.log(refreshToken)
+
+        const user = await AcountModel.findOne({
+            id: profile.id,
+
+        });
+        if (!user) {
+            console.log('Adding new google user to DB..');
+            const user = new AcountModel({
+                id: profile.id,
+                username: profile.displayName,
+                authType: 'google',
+                authGoogleId: profile.id
+
+            });
+            await user.save();
+            // console.log(user);
+            const token = jwt.sign({ profile }, '123')
+            return done(null, profile);
+        } else {
+            console.log('Google User already exist in DB..');
+            // console.log(profile);
+            return done(null, profile);
+        }
+
+    }
+));
 
 
 

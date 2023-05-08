@@ -13,6 +13,19 @@ const AcountSchema = new Schema({
         type: String,
         default: null
     },
+    authGoogleId: {
+        type: String,
+        default: null
+    },
+    authFacebookId: {
+        type: String,
+        default: null
+    },
+    authType: {
+        type: String,
+        enum: ['local', 'google', 'facebook'],
+        default: 'local'
+    },
     refreshToken: {
         type: String,
         default: null
